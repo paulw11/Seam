@@ -73,6 +73,7 @@ public class SMStore: NSIncrementalStore {
         var moc = NSManagedObjectContext(concurrencyType: NSManagedObjectContextConcurrencyType.PrivateQueueConcurrencyType)
         moc.persistentStoreCoordinator = self.backingPersistentStoreCoordinator
         moc.retainsRegisteredObjects = true
+        moc.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return moc
         }()
     
@@ -271,7 +272,8 @@ public class SMStore: NSIncrementalStore {
         try self.insertObjectsInBackingStore(objectsToInsert: context.insertedObjects, mainContext: context)
         try self.updateObjectsInBackingStore(objectsToUpdate: context.updatedObjects)
         try self.deleteObjectsFromBackingStore(objectsToDelete: context.deletedObjects, mainContext: context)
-        try self.backingMOC.saveIfHasChanges()
+        try! self.backingMOC.saveIfHasChanges()
+        print("Saved$$$")
         self.triggerSync()
         return []
     }
