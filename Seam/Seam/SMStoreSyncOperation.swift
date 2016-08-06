@@ -90,13 +90,13 @@ class SMStoreSyncOperation: NSOperation {
             try SMStoreChangeSetHandler.defaultHandler.removeAllQueuedChangeSets(backingContext: self.localStoreMOC!)
             return
         } catch SMSyncOperationError.ConflictsDetected(let conflictedRecords) {
-            self.resolveConflicts(conflictedRecords: conflictedRecords)
+            let resolvedRecords = self.resolveConflicts(conflictedRecords: conflictedRecords)
             var insertedOrUpdatedCKRecordsWithRecordIDStrings: Dictionary<String,CKRecord> = Dictionary<String,CKRecord>()
             for record in localChangesInServerRepresentation.insertedOrUpdatedCKRecords! {
                 let ckRecord: CKRecord = record as CKRecord
                 insertedOrUpdatedCKRecordsWithRecordIDStrings[ckRecord.recordID.recordName] = ckRecord
             }
-            for record in conflictedRecords {
+            for record in resolvedRecords {
                 insertedOrUpdatedCKRecordsWithRecordIDStrings[record.recordID.recordName] = record
             }
             localChangesInServerRepresentation.insertedOrUpdatedCKRecords = Array(insertedOrUpdatedCKRecordsWithRecordIDStrings.values)
@@ -171,8 +171,9 @@ class SMStoreSyncOperation: NSOperation {
         }
     }
     
-    func resolveConflicts(conflictedRecords conflictedRecords: [CKRecord])
+    func resolveConflicts(conflictedRecords conflictedRecords: [CKRecord]) -> [CKRecord]
     {
+        var finalCKRecords: [CKRecord] = [CKRecord]()
         if conflictedRecords.count > 0 {
             var conflictedRecordsWithStringRecordIDs: Dictionary<String,(clientRecord:CKRecord?,serverRecord:CKRecord?)> = Dictionary<String,(clientRecord:CKRecord?,serverRecord:CKRecord?)>()
             for record in conflictedRecords {
@@ -194,7 +195,7 @@ class SMStoreSyncOperation: NSOperation {
             })
             self.operationQueue?.addOperation(ckFetchRecordsOperation)
             self.operationQueue?.waitUntilAllOperationsAreFinished()
-            var finalCKRecords: [CKRecord] = [CKRecord]()
+            
             for key in Array(conflictedRecordsWithStringRecordIDs.keys) {
                 let value = conflictedRecordsWithStringRecordIDs[key]!
                 var clientServerCKRecord = value as (clientRecord:CKRecord?,serverRecord:CKRecord?)
@@ -205,28 +206,18 @@ class SMStoreSyncOperation: NSOperation {
                         print("ClientTellsWhichWins conflict resolution policy requires to set syncConflictResolutionBlock on the instance of SMStore")
                     }
                 } else if self.syncConflictPolicy == SMSyncConflictResolutionPolicy.ClientRecordWins {
+                    clientServerCKRecord.serverRecord = clientServerCKRecord.clientRecord
                     
                 } else if self.syncConflictPolicy == SMSyncConflictResolutionPolicy.ServerRecordWins {
-                    
+                    print("Resolving conflict in favour of server")
                 } else if self.syncConflictPolicy == SMSyncConflictResolutionPolicy.KeepBoth {
                     
                 }
-//                else if self.syncConflictPolicy == SMSyncConflictResolutionPolicy.KeepBoth
-//                {
-//                    let keys = clientServerCKRecord.serverRecord!.allKeys()
-//                    let values = clientServerCKRecord.clientRecord!.allKeys()
-//                    
-//                }
-//                else if (self.syncConflictPolicy == SMSyncConflictResolutionPolicy.ClientRecordWins || (self.syncConflictPolicy == SMSyncConflictResolutionPolicy.GreaterModifiedDateWins && clientServerCKRecord.clientRecord!.modificationDate!.compare(clientServerCKRecord.serverRecord!.modificationDate!) == NSComparisonResult.OrderedDescending))
-//                {
-//                    let keys = clientServerCKRecord.serverRecord!.allKeys()
-//                    let values = clientServerCKRecord.clientRecord!.dictionaryWithValuesForKeys(keys)
-//                    clientServerCKRecord.serverRecord!.setValuesForKeysWithDictionary(values)
-//                }
                 
                 finalCKRecords.append(clientServerCKRecord.serverRecord!)
             }
         }
+        return finalCKRecords
     }
     
     func localChangesInServerRepresentation() throws -> (insertedOrUpdatedCKRecords:Array<CKRecord>?,deletedCKRecordIDs:Array<CKRecordID>?) {
