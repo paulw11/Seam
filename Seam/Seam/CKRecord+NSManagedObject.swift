@@ -129,8 +129,15 @@ extension CKRecord {
                     managedObject!.setValue(recordIDString, forKey: SMLocalStoreRecordIDAttributeName)
                     managedObject!.setValue(self.encodedSystemFields(), forKey: SMLocalStoreRecordEncodedValuesAttributeName)
                     let attributeValuesDictionary = self.allAttributeValuesAsManagedObjectAttributeValues(usingContext: context)
-                    if attributeValuesDictionary != nil {
-                        managedObject!.setValuesForKeysWithDictionary(attributeValuesDictionary!)
+                    if let valuesDictionary = attributeValuesDictionary  {
+                        managedObject!.setValuesForKeysWithDictionary(valuesDictionary)
+                        for (key,value) in valuesDictionary {
+                            if let stringValue = value as? String {
+                                if stringValue == SMCloudRecordNilValue {
+                                    managedObject!.setValue(nil, forKey: key)
+                                }
+                            }
+                        }
                     }
                     let referencesValuesDictionary = self.allCKReferencesAsManagedObjects(usingContext: context)
                     if referencesValuesDictionary != nil {
