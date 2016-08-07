@@ -111,6 +111,13 @@ extension CKRecord {
                     let attributeValuesDictionary = self.allAttributeValuesAsManagedObjectAttributeValues(usingContext: context)
                     if attributeValuesDictionary != nil {
                         managedObject!.setValuesForKeysWithDictionary(attributeValuesDictionary!)
+                        for (key,value) in valuesDictionary {
+                            if let stringValue = value as? String {
+                                if stringValue == SMCloudRecordNilValue {
+                                    managedObject!.setValue(nil, forKey: key)
+                                }
+                            }
+                        }
                     }
                     let referencesValuesDictionary = self.allCKReferencesAsManagedObjects(usingContext: context)
                     if referencesValuesDictionary != nil {
