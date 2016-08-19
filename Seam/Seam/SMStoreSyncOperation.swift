@@ -285,11 +285,11 @@ class SMStoreSyncOperation: NSOperation {
             for record in insertedOrUpdatedCKRecords {
                 let entity = self.persistentStoreCoordinator?.managedObjectModel.entitiesByName[record.recordType]
                 if entity != nil {
-                    for key in Array(entity!.propertiesByName.keys) {
+   /*                 for key in Array(entity!.propertiesByName.keys) {
                         if record[key] == nil && key != SMLocalStoreRecordIDAttributeName && key != SMLocalStoreRecordEncodedValuesAttributeName {
                             record[key] = SMCloudRecordNilValue
                         }
-                    }
+                    }*/
                 }
             }
         }
