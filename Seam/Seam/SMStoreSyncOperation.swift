@@ -213,8 +213,11 @@ class SMStoreSyncOperation: NSOperation {
                 } else if self.syncConflictPolicy == SMSyncConflictResolutionPolicy.KeepBoth {
                     
                 }
-                
-                finalCKRecords.append(clientServerCKRecord.serverRecord!)
+                if let serverRecord = clientServerCKRecord.serverRecord {
+                    finalCKRecords.append(serverRecord)
+                } else if let clientRecord = clientServerCKRecord.clientRecord {
+                    finalCKRecords.append(clientRecord)
+                }
             }
         }
         return finalCKRecords
