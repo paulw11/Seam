@@ -75,7 +75,7 @@ public class SMStore: NSIncrementalStore {
         moc.retainsRegisteredObjects = true
         moc.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return moc
-        }()
+    }()
     
     override public class func initialize() {
         NSPersistentStoreCoordinator.registerStoreClass(self, forStoreType: self.type)
@@ -106,7 +106,8 @@ public class SMStore: NSIncrementalStore {
         if backingMOM != nil {
             self.backingPersistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: backingMOM!)
             do {
-                self.backingPersistentStore = try self.backingPersistentStoreCoordinator?.addPersistentStoreWithType(NSSQLiteStoreType, configuration: nil, URL: storeURL, options: nil)
+                let options = [NSMigratePersistentStoresAutomaticallyOption: true, NSInferMappingModelAutomaticallyOption: true]
+                self.backingPersistentStore = try self.backingPersistentStoreCoordinator?.addPersistentStoreWithType(NSSQLiteStoreType, configuration: nil, URL: storeURL, options: options)
                 self.operationQueue = NSOperationQueue()
                 self.operationQueue!.maxConcurrentOperationCount = 1
             } catch {
